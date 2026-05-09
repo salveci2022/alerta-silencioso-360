@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo -->
+  <rect width="512" height="512" rx="90" fill="#070B14"/>
+  
+  <!-- Borda vermelha sutil -->
+  <rect x="4" y="4" width="504" height="504" rx="87" fill="none" stroke="#DC2626" stroke-width="3"/>
+  
+  <!-- Escudo principal -->
+  <path d="M256 72 L370 115 L370 275 Q370 368 256 415 Q142 368 142 275 L142 115 Z" fill="#1A0A0A" stroke="#DC2626" stroke-width="2"/>
+  <path d="M256 90 L352 128 L352 272 Q352 354 256 396 Q160 354 160 272 L160 128 Z" fill="#DC2626"/>
+  <path d="M256 108 L336 142 L336 270 Q336 342 256 378 Q176 342 176 270 L176 142 Z" fill="#EF4444"/>
+  
+  <!-- Raio centralizado -->
+  <polygon points="272,152 228,268 258,268 240,360 292,232 260,232 282,152" fill="white" opacity="0.95"/>
+  
+  <!-- Pulso / ECG na base do escudo -->
+  <polyline points="160,300 185,300 196,278 208,322 220,290 230,305 242,300 352,300"
+    fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+
+  <!-- Texto ALERTA -->
+  <text x="256" y="448" text-anchor="middle"
+    font-family="Arial Black, Arial, sans-serif"
+    font-size="44" font-weight="900"
+    fill="#FFFFFF" letter-spacing="6">ALERTA</text>
+    
+  <!-- Texto 360 em vermelho -->
+  <text x="256" y="492" text-anchor="middle"
+    font-family="Arial Black, Arial, sans-serif"
+    font-size="28" font-weight="900"
+    fill="#EF4444" letter-spacing="12">360°</text>
+</svg>
