@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block titulo %}Financeiro — ALERTA SILENCIOSO 360{% endblock %}
+{% block page_titulo %}💰 Painel Financeiro SaaS{% endblock %}
+{% block content %}
+<div class="page">
+
+  <!-- Stats financeiros -->
+  <div class="stats-grid">
+    <div class="stat-card green">
+      <div class="stat-num green">R$ {{ assinatura.preco if assinatura else 0 }}</div>
+      <div class="stat-label">MRR (Receita Mensal)</div>
+      <span class="stat-ic">💰</span>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-num blue">{{ total_usuarios }}</div>
+      <div class="stat-label">Usuários ativos</div>
+      <span class="stat-ic">👤</span>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-num red">{{ alertas_mes }}</div>
+      <div class="stat-label">Alertas este mês</div>
+      <span class="stat-ic">🚨</span>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-num amber">{{ total_alertas }}</div>
+      <div class="stat-label">Total de alertas</div>
+      <span class="stat-ic">⚡</span>
+    </div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- Status da assinatura -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">📋 Assinatura Atual</span></div>
+      <div class="card-body" style="padding:20px">
+        {% if assinatura %}
+        <div style="margin-bottom:16px">
+          <div style="font-size:22px;font-weight:700;color:var(--text)">Plano {{ assinatura.plano_nome }}</div>
+          <div style="font-size:28px;font-weight:700;color:var(--green);margin:4px 0">R$ {{ assinatura.preco }}<span style="font-size:14px;color:var(--text3)">/mês</span></div>
+          <span class="badge {% if assinatura.status=='ativo' %}fechado{% elif assinatura.status=='trial' %}andamento{% else %}ativo{% endif %}">
+            {{ assinatura.status|upper }}
+          </span>
+        </div>
+        <div style="font-size:13px;color:var(--text2);display:flex;flex-direction:column;gap:8px">
+          {% if assinatura.status == 'trial' %}
+          <div>⏳ Trial vence em: <strong style="color:var(--amber)">{{ assinatura.trial_fim_br }}</strong></div>
+          {% elif assinatura.status == 'ativo' %}
+          <div>🔄 Próxima renovação: <strong>{{ assinatura.renovacao_em }}</strong></div>
+          {% endif %}
+          <div>📅 Ativo desde: {{ assinatura.ativo_desde[:10] }}</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn btn-green btn-sm" onclick="abrirModal('modal-pagto')">+ Registrar pagamento</button>
+          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Bloquear acesso?')) bloquear()">🔒 Bloquear</button>
+        </div>
+        {% else %}
+        <div class="empty"><div class="empty-ic">📋</div><div class="empty-txt">Sem assinatura ativa</div></div>
+        <a href="/planos" class="btn btn-red" style="margin-top:12px;display:inline-flex">Ativar assinatura</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Planos disponíveis -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">📦 Planos Disponíveis</span></div>
+      <div class="card-body">
+        <table class="tabela">
+          <thead><tr><th>Plano</th><th>Preço</th><th>Usuários</th><th>Trial</th></tr></thead>
+          <tbody>
+          {% for pid, p in planos.items() %}
+          <tr>
+            <td style="font-weight:500;color:var(--text)">{{ p.nome }}</td>
+            <td style="color:var(--green);font-family:monospace">R$ {{ p.preco }}/mês</td>
+            <td>{% if p.usuarios < 999 %}Até {{ p.usuarios }}{% else %}Ilimitado{% endif %}</td>
+            <td><span style="color:var(--amber)">{{ p.trial_dias }} dias</span></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Histórico de pagamentos -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-header"><span class="card-title">💳 Histórico de Pagamentos</span></div>
+    <div class="card-body">
+      {% if assinatura and assinatura.pagamentos %}
+      <table class="tabela">
+        <thead><tr><th>#ID</th><th>Data</th><th>Valor</th><th>Método</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for p in assinatura.pagamentos|reverse %}
+        <tr>
+          <td><code style="color:var(--green)">{{ p.id }}</code></td>
+          <td style="font-family:monospace">{{ p.data }}</td>
+          <td style="color:var(--green);font-weight:600">R$ {{ p.valor }}</td>
+          <td>{{ p.metodo }}</td>
+          <td><span class="badge fechado">{{ p.status }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty"><div class="empty-ic">💳</div><div class="empty-txt">Nenhum pagamento registrado</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal registrar pagamento -->
+<div class="modal-overlay" id="modal-pagto">
+  <div class="modal">
+    <div class="modal-titulo">💰 Registrar Pagamento</div>
+    <button class="modal-close" onclick="fecharModal('modal-pagto')">✕</button>
+    <div class="form-group">
+      <label class="form-label">Valor (R$)</label>
+      <input class="form-input" id="pagto-valor" type="number" value="{{ assinatura.preco if assinatura else 997 }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Método</label>
+      <select class="form-select" id="pagto-metodo">
+        <option value="PIX">PIX</option>
+        <option value="Boleto">Boleto</option>
+        <option value="Cartão de crédito">Cartão de crédito</option>
+        <option value="Transferência">Transferência bancária</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-pagto')">Cancelar</button>
+      <button class="btn btn-green" onclick="registrarPagto()">✓ Confirmar pagamento</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function registrarPagto() {
+  const data = await api('/api/financeiro/registrar-pagamento','POST',{
+    valor: document.getElementById('pagto-valor').value,
+    metodo: document.getElementById('pagto-metodo').value,
+  });
+  if (data.ok) { toast('Pagamento registrado! Acesso liberado.','success',3000); setTimeout(()=>location.reload(),800); }
+}
+async function bloquear() {
+  const data = await api('/api/financeiro/bloquear','POST');
+  if (data.ok) { toast('Acesso bloqueado.','error',3000); setTimeout(()=>location.reload(),800); }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ALERTA SILENCIOSO 360 — Login</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.login-wrap{width:100%;max-width:400px;padding:0 16px}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:36px 32px}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-escudo{width:64px;height:64px;background:var(--red2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;box-shadow:0 0 30px rgba(220,38,38,.3)}
+.login-logo h1{font-size:20px;font-weight:700;color:var(--text)}
+.login-logo h1 span{color:var(--red)}
+.login-logo p{font-size:12px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.erro-box{background:var(--red-bg);border:1px solid var(--red-brd);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:16px;text-align:center}
+.login-footer{text-align:center;margin-top:20px;font-size:11px;color:var(--text3)}
+.demo-hint{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text3);margin-top:16px;font-family:'JetBrains Mono',monospace}
+.demo-hint strong{color:var(--text2);display:block;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-escudo">⚡</div>
+      <h1>ALERTA SILENCIOSO <span>360</span></h1>
+      <p>Central de Segurança em Tempo Real</p>
+    </div>
+    {% if erro %}
+    <div class="erro-box">{{ erro }}</div>
+    {% endif %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input class="form-input" type="email" name="email" placeholder="seu@email.com" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input class="form-input" type="password" name="senha" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-red" style="width:100%;justify-content:center;padding:12px">
+        Acessar Central
+      </button>
+    </form>
+    <div class="demo-hint">
+      <strong>Acessos de demonstração:</strong>
+      admin@alerta360.com / admin123<br>
+      operador@alerta360.com / op123
+    </div>
+  </div>
+  <div class="login-footer">
+    ALERTA SILENCIOSO 360 · SPYNET Security · Brasília-DF
+  </div>
+</div>
+</body>
+</html>

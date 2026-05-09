@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block titulo %}Usuários — ALERTA SILENCIOSO 360{% endblock %}
+{% block page_titulo %}👤 Gerenciar Usuários{% endblock %}
+{% block content %}
+<div class="page">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+    <button class="btn btn-red" onclick="abrirModal('modal-user')">+ Novo Usuário</button>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <table class="tabela">
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="font-weight:500;color:var(--text)">{{ u.nome }}</td>
+          <td style="font-family:monospace;font-size:12px">{{ u.email }}</td>
+          <td>
+            <span style="font-size:11px;padding:2px 8px;border-radius:4px;
+              background:{% if u.perfil=='master' %}var(--red-bg){% elif u.perfil=='operador' %}var(--blue-bg){% else %}var(--bg3){% endif %};
+              color:{% if u.perfil=='master' %}var(--red){% elif u.perfil=='operador' %}var(--blue){% else %}var(--text3){% endif %}">
+              {{ u.perfil }}
+            </span>
+          </td>
+          <td><span class="badge {% if u.ativo %}fechado{% else %}aberto{% endif %}">{% if u.ativo %}ativo{% else %}inativo{% endif %}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <div class="modal-titulo">👤 Novo Usuário</div>
+    <button class="modal-close" onclick="fecharModal('modal-user')">✕</button>
+    <div class="form-group"><label class="form-label">Nome completo</label><input class="form-input" id="u-nome"></div>
+    <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" id="u-email" type="email"></div>
+    <div class="form-group"><label class="form-label">Senha inicial</label><input class="form-input" id="u-senha" type="password" placeholder="Mínimo 6 caracteres"></div>
+    <div class="form-group"><label class="form-label">Perfil</label>
+      <select class="form-select" id="u-perfil">
+        <option value="operador">Operador</option>
+        <option value="usuario">Usuário (escola/empresa)</option>
+        <option value="master">Master Admin</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-user')">Cancelar</button>
+      <button class="btn btn-red" onclick="salvarUser()">Criar usuário</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function salvarUser() {
+  const data = await api('/api/usuarios','POST',{
+    nome: document.getElementById('u-nome').value,
+    email: document.getElementById('u-email').value,
+    senha: document.getElementById('u-senha').value,
+    perfil: document.getElementById('u-perfil').value,
+  });
+  if (data.ok) { toast('Usuário criado!','success',2000); setTimeout(()=>location.reload(),600); }
+  else toast('Erro: '+(data.erro||'desconhecido'));
+}
+</script>
+{% endblock %}

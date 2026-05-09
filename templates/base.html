@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{% block titulo %}ALERTA SILENCIOSO 360{% endblock %}</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">
+        <div class="escudo">⚡</div>
+        <h1>ALERTA SILENCIOSO <span>360° SECURITY</span></h1>
+      </div>
+    </div>
+    <div class="sidebar-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-label">SISTEMA OPERACIONAL</span>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <a href="/dashboard" class="nav-item {% if request.path=='/dashboard' %}ativo{% endif %}">
+        <span class="nav-ic">📊</span> Dashboard
+        <span id="nav-alertas" class="nav-badge" style="display:none">0</span>
+      </a>
+      <a href="/sos" class="nav-item {% if request.path=='/sos' %}ativo{% endif %}">
+        <span class="nav-ic">🚨</span> Botão SOS
+      </a>
+      <a href="/alertas" class="nav-item {% if request.path=='/alertas' %}ativo{% endif %}">
+        <span class="nav-ic">⚡</span> Alertas
+      </a>
+      <a href="/sirene" class="nav-item {% if request.path=='/sirene' %}ativo{% endif %}">
+        <span class="nav-ic">📢</span> Sirene
+      </a>
+
+      <div class="nav-section">Gestão</div>
+      <a href="/ocorrencias" class="nav-item {% if request.path=='/ocorrencias' %}ativo{% endif %}">
+        <span class="nav-ic">📋</span> Ocorrências
+      </a>
+      <a href="/unidades" class="nav-item {% if request.path=='/unidades' %}ativo{% endif %}">
+        <span class="nav-ic">🏢</span> Unidades
+      </a>
+
+      {% if perfil == 'master' %}
+      <div class="nav-section">Administração</div>
+      <a href="/usuarios" class="nav-item {% if request.path=='/usuarios' %}ativo{% endif %}">
+        <span class="nav-ic">👤</span> Usuários
+      </a>
+      <a href="/financeiro" class="nav-item {% if request.path=='/financeiro' %}ativo{% endif %}">
+        <span class="nav-ic">💰</span> Financeiro
+      </a>
+      <a href="/logs" class="nav-item {% if request.path=='/logs' %}ativo{% endif %}">
+        <span class="nav-ic">📜</span> Logs
+      </a>
+      {% endif %}
+      <div class="nav-section">Sistema</div>
+      <a href="/demo" class="nav-item {% if request.path=='/demo' %}ativo{% endif %}">
+        <span class="nav-ic">🎭</span> Modo Demo
+      </a>
+      <a href="/planos" class="nav-item">
+        <span class="nav-ic">📦</span> Planos
+      </a>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="u-nome">{{ usuario }}</div>
+      <div class="u-perfil">{{ perfil }}</div>
+      <a href="/logout">⎋ Sair</a>
+    </div>
+  </nav>
+
+  <!-- CONTEÚDO -->
+  <div class="main-content scanline">
+    <div class="topbar">
+      <span class="topbar-titulo">{% block page_titulo %}{% endblock %}</span>
+      <div class="topbar-direita">
+        <span class="topbar-clock" id="clock">00:00:00</span>
+      </div>
+    </div>
+    <div id="toasts" class="alert-popup"></div>
+    {% block content %}{% endblock %}
+  </div>
+
+</div>
+<script src="/static/js/main.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

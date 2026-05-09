@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block titulo %}Ocorrências — ALERTA SILENCIOSO 360{% endblock %}
+{% block page_titulo %}📋 Gestão de Ocorrências{% endblock %}
+{% block content %}
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div></div>
+    <button class="btn btn-red" onclick="abrirModal('modal-inc')">+ Nova Ocorrência</button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Todas as ocorrências</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="filtrarInc('todos')">Todos</button>
+        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red-brd)" onclick="filtrarInc('aberto')">Abertos</button>
+        <button class="btn btn-ghost btn-sm" onclick="filtrarInc('andamento')">Em andamento</button>
+        <button class="btn btn-ghost btn-sm" onclick="filtrarInc('finalizado')">Finalizados</button>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if incidents %}
+      <table class="tabela" id="tabela-inc">
+        <thead><tr>
+          <th>#ID</th><th>Data/Hora</th><th>Título</th>
+          <th>Unidade</th><th>Risco</th><th>Status</th><th>Ações</th>
+        </tr></thead>
+        <tbody>
+        {% for inc in incidents %}
+        <tr data-status="{{ inc.status }}">
+          <td><code style="color:var(--blue)">{{ inc.id }}</code></td>
+          <td style="font-family:monospace;font-size:11px;white-space:nowrap">{{ inc.ts_br }}</td>
+          <td>
+            <div style="font-size:13px;color:var(--text)">{{ inc.titulo }}</div>
+            <div style="font-size:11px;color:var(--text3)">{{ inc.responsavel }}</div>
+          </td>
+          <td>{{ inc.unidade }}</td>
+          <td><span class="badge {{ inc.risco }}">{{ inc.risco }}</span></td>
+          <td><span class="badge {{ inc.status }}">{{ inc.status }}</span></td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-ghost btn-sm" onclick="editarInc('{{ inc.id }}','{{ inc.status }}')">Editar</button>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty"><div class="empty-ic">📋</div><div class="empty-txt">Nenhuma ocorrência registrada</div></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal nova ocorrência -->
+<div class="modal-overlay" id="modal-inc">
+  <div class="modal">
+    <div class="modal-titulo">📋 Nova Ocorrência</div>
+    <button class="modal-close" onclick="fecharModal('modal-inc')">✕</button>
+    <div class="form-group">
+      <label class="form-label">Título</label>
+      <input class="form-input" id="inc-titulo" placeholder="Descreva brevemente a ocorrência">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Unidade</label>
+      <select class="form-select" id="inc-unidade">
+        {% for u in units %}
+        <option>{{ u.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nível de risco</label>
+      <select class="form-select" id="inc-risco">
+        <option value="alto">🔴 Alto</option>
+        <option value="medio" selected>🟡 Médio</option>
+        <option value="baixo">🟢 Baixo</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-textarea" id="inc-descricao" placeholder="Detalhes da ocorrência..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Evidências / observações</label>
+      <textarea class="form-textarea" id="inc-obs" placeholder="Links, fotos, testemunhas..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-inc')">Cancelar</button>
+      <button class="btn btn-red" onclick="salvarInc()">Salvar ocorrência</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal editar status -->
+<div class="modal-overlay" id="modal-edit-inc">
+  <div class="modal">
+    <div class="modal-titulo">✏️ Atualizar Ocorrência</div>
+    <button class="modal-close" onclick="fecharModal('modal-edit-inc')">✕</button>
+    <input type="hidden" id="edit-inc-id">
+    <div class="form-group">
+      <label class="form-label">Novo status</label>
+      <select class="form-select" id="edit-inc-status">
+        <option value="aberto">Aberto</option>
+        <option value="andamento">Em andamento</option>
+        <option value="finalizado">Finalizado</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observações</label>
+      <textarea class="form-textarea" id="edit-inc-obs"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-edit-inc')">Cancelar</button>
+      <button class="btn btn-blue" onclick="atualizarInc()">Atualizar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function filtrarInc(s) {
+  document.querySelectorAll('#tabela-inc tbody tr').forEach(tr => {
+    tr.style.display = (s==='todos'||tr.dataset.status===s)?'':'none';
+  });
+}
+async function salvarInc() {
+  const data = await api('/api/ocorrencias','POST',{
+    titulo: document.getElementById('inc-titulo').value,
+    unidade: document.getElementById('inc-unidade').value,
+    risco: document.getElementById('inc-risco').value,
+    descricao: document.getElementById('inc-descricao').value,
+    observacoes: document.getElementById('inc-obs').value,
+  });
+  if (data.ok) { toast('Ocorrência registrada!','success',3000); setTimeout(()=>location.reload(),800); }
+  else toast('Erro: '+data.erro);
+}
+function editarInc(id, status) {
+  document.getElementById('edit-inc-id').value = id;
+  document.getElementById('edit-inc-status').value = status;
+  abrirModal('modal-edit-inc');
+}
+async function atualizarInc() {
+  const id = document.getElementById('edit-inc-id').value;
+  const data = await api(`/api/ocorrencias/${id}`,'PUT',{
+    status: document.getElementById('edit-inc-status').value,
+    observacoes: document.getElementById('edit-inc-obs').value,
+  });
+  if (data.ok) { toast('Atualizado!','success',2000); setTimeout(()=>location.reload(),600); }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block titulo %}Botão SOS — ALERTA SILENCIOSO 360{% endblock %}
+{% block page_titulo %}🚨 Botão SOS — Acionamento de Emergência{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="grid-2">
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Acionar Emergência</span></div>
+      <div class="card-body" style="padding:24px">
+        <div class="sos-wrap">
+          <button id="btn-sos" onclick="acionar()">
+            <span class="sos-ic">🆘</span>
+            <span class="sos-txt">ACIONAR SOS</span>
+          </button>
+          <p style="margin-top:16px;font-size:12px;color:var(--text3);text-align:center">
+            Pressione o botão para acionar alerta imediato
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Unidade / Local</label>
+          <select class="form-select" id="unidade">
+            {% for u in units %}
+            <option value="{{ u.nome }}">{{ u.nome }}</option>
+            {% endfor %}
+            <option value="Localização manual">Outro local</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tipo de ocorrência</label>
+          <select class="form-select" id="tipo">
+            <option value="SOS">🆘 SOS Geral</option>
+            <option value="Intruso">🚪 Intruso detectado</option>
+            <option value="Incêndio">🔥 Incêndio / Fumaça</option>
+            <option value="Agressão">⚠️ Agressão / Violência</option>
+            <option value="Sequestro">🔒 Sequestro / Reféns</option>
+            <option value="Pânico">😱 Pânico geral</option>
+            <option value="Médico">🏥 Emergência médica</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descrição rápida (opcional)</label>
+          <textarea class="form-textarea" id="descricao" placeholder="Detalhes da situação..."></textarea>
+        </div>
+
+        <div id="status-box" style="display:none;margin-top:8px;border-radius:10px;padding:14px 16px"></div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Instruções -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">ℹ️ Como funciona</span></div>
+        <div class="card-body" style="padding:16px 20px">
+          {% for item in [
+            ('1','Pressione o botão SOS','O sistema registra a ocorrência instantaneamente'),
+            ('2','Alerta disparado','WhatsApp enviado para todos os contatos de segurança'),
+            ('3','Dashboard atualiza','A central de monitoramento recebe o alerta em tempo real'),
+            ('4','PDF gerado','Relatório jurídico disponível para download no painel'),
+          ] %}
+          <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--red2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">{{ item[0] }}</div>
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text)">{{ item[1] }}</div>
+              <div style="font-size:12px;color:var(--text3)">{{ item[2] }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Alertas ativos -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">⚡ Alertas Ativos</span>
+          <a href="/alertas" class="btn btn-ghost btn-sm">Ver todos</a>
+        </div>
+        <div class="card-body" style="padding:12px 0">
+          <div id="lista-ativos" style="padding:0 20px">
+            <div class="empty"><div class="empty-ic">🛡️</div><div class="empty-txt">Nenhum alerta ativo</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let acionando = false;
+
+async function acionar() {
+  if (acionando) return;
+  acionando = true;
+  const btn = document.getElementById('btn-sos');
+  btn.classList.add('enviando');
+  btn.innerHTML = '<span class="loading"></span><span class="sos-txt">ENVIANDO...</span>';
+
+  const payload = {
+    unidade:   document.getElementById('unidade').value,
+    tipo:      document.getElementById('tipo').value,
+    descricao: document.getElementById('descricao').value,
+  };
+
+  try {
+    const data = await api('/api/sos', 'POST', payload);
+    const box = document.getElementById('status-box');
+    if (data.ok) {
+      btn.classList.remove('enviando');
+      btn.classList.add('acionado');
+      btn.innerHTML = '<span class="sos-ic">✅</span><span class="sos-txt">ALERTA ENVIADO</span>';
+      box.style.display = 'block';
+      box.style.background = 'var(--green-bg)';
+      box.style.border = '1px solid var(--green)';
+      box.innerHTML = `<div style="font-size:13px;font-weight:600;color:var(--green)">✅ Ocorrência #${data.id} registrada — ${data.ts}</div>
+                       <div style="font-size:12px;color:var(--text3);margin-top:4px">${data.enviados} alertas disparados via WhatsApp</div>`;
+      tocarSom();
+      setTimeout(() => {
+        btn.classList.remove('acionado');
+        btn.innerHTML = '<span class="sos-ic">🆘</span><span class="sos-txt">ACIONAR SOS</span>';
+        box.style.display = 'none';
+        acionando = false;
+      }, 15000);
+    } else throw new Error(data.erro || 'Erro');
+  } catch(e) {
+    btn.classList.remove('enviando');
+    btn.innerHTML = '<span class="sos-ic">🆘</span><span class="sos-txt">ACIONAR SOS</span>';
+    const box = document.getElementById('status-box');
+    box.style.display = 'block';
+    box.style.background = 'var(--red-bg)';
+    box.style.border = '1px solid var(--red)';
+    box.innerHTML = `<div style="color:var(--red);font-size:13px">Erro: ${e.message}</div>`;
+    acionando = false;
+  }
+}
+
+// Carrega alertas ativos
+async function carregarAtivos() {
+  const data = await api('/api/alertas');
+  const ativos = data.filter(a => a.status === 'ativo');
+  const div = document.getElementById('lista-ativos');
+  if (!ativos.length) {
+    div.innerHTML = '<div class="empty"><div class="empty-ic">🛡️</div><div class="empty-txt">Nenhum alerta ativo</div></div>';
+    return;
+  }
+  div.innerHTML = ativos.map(a => `
+    <div style="background:var(--red-bg);border:1px solid var(--red-brd);border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--red)">🚨 #${a.id} — ${a.tipo}</div>
+        <div style="font-size:11px;color:var(--text3)">${a.unidade} · ${a.ts_br}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="fecharAlerta('${a.id}', this)">Fechar</button>
+    </div>
+  `).join('');
+}
+carregarAtivos();
+setInterval(carregarAtivos, 8000);
+</script>
+{% endblock %}

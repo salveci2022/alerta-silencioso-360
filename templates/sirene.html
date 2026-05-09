@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block titulo %}Sirene — ALERTA SILENCIOSO 360{% endblock %}
+{% block page_titulo %}📢 Controle de Sirene{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header"><span class="card-title">Painel de Sirenes por Unidade</span></div>
+    <div class="card-body" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+      {% for u in units %}
+      <div class="sirene-card">
+        <div class="sirene-info">
+          <h3>{{ u.nome }}</h3>
+          <p><span class="tipo-{{ u.tipo }}">{{ u.tipo }}</span> · {{ u.endereco }}</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span id="label-{{ u.id }}" class="sirene-ativa-label" style="display:{% if u.sirene_ativa %}inline{% else %}none{% endif %}">🔴 SIRENE ATIVA</span>
+          <button class="sirene-toggle {% if u.sirene_ativa %}on{% endif %}"
+            id="toggle-{{ u.id }}"
+            onclick="toggleSireneUnidade('{{ u.id }}', this)"></button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">ℹ️ Sirene Global</span></div>
+    <div class="card-body" style="padding:20px">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-red" onclick="ligarTodas()">🔴 Ligar todas as sirenes</button>
+        <button class="btn btn-green" onclick="desligarTodas()">✅ Desligar todas</button>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:12px">A sirene simula som de emergência no navegador e registra ativação no log do sistema.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function toggleSireneUnidade(uid, btn) {
+  const ativa = btn.classList.contains('on');
+  const nova = !ativa;
+  const data = await api(`/api/sirene/${uid}`, 'POST', {ativa: nova});
+  if (data.ok) {
+    btn.classList.toggle('on', nova);
+    const label = document.getElementById(`label-${uid}`);
+    if (label) label.style.display = nova ? 'inline' : 'none';
+    if (nova) { ligarSirene(); toast(`Sirene ativada!`, 'error'); }
+    else { desligarSirene(); toast('Sirene desligada.', 'success', 2000); }
+  }
+}
+
+async function ligarTodas() {
+  const btns = document.querySelectorAll('.sirene-toggle');
+  for (const btn of btns) {
+    const uid = btn.id.replace('toggle-', '');
+    if (!btn.classList.contains('on')) await toggleSireneUnidade(uid, btn);
+  }
+  toast('🔴 Todas as sirenes ativadas!', 'error');
+}
+
+async function desligarTodas() {
+  const btns = document.querySelectorAll('.sirene-toggle');
+  for (const btn of btns) {
+    const uid = btn.id.replace('toggle-', '');
+    if (btn.classList.contains('on')) await toggleSireneUnidade(uid, btn);
+  }
+  toast('Todas as sirenes desligadas.', 'success', 2000);
+}
+</script>
+{% endblock %}

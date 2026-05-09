@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block titulo %}Dashboard — ALERTA SILENCIOSO 360{% endblock %}
+{% block page_titulo %}Central de Monitoramento{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <!-- Banner alerta ativo -->
+  <div class="alerta-banner" id="banner-alerta" style="display:{% if alertas_ativos > 0 %}flex{% else %}none{% endif %}">
+    <span class="alerta-banner-ic">🚨</span>
+    <span class="alerta-banner-txt">ALERTA ATIVO — Verificar imediatamente! <span id="alertas_ativos_txt">{{ alertas_ativos }} alerta(s) em aberto</span></span>
+    <a href="/alertas" class="btn btn-red btn-sm" style="margin-left:auto">Ver alertas</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card red">
+      <div class="stat-num red" id="alertas_ativos">{{ alertas_ativos }}</div>
+      <div class="stat-label">Alertas Ativos</div>
+      <span class="stat-ic">🚨</span>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-num blue" id="alertas_hoje">{{ alertas_hoje }}</div>
+      <div class="stat-label">Alertas Hoje</div>
+      <span class="stat-ic">📅</span>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-num amber" id="incidentes_abertos">{{ incidentes_abertos }}</div>
+      <div class="stat-label">Ocorrências Abertas</div>
+      <span class="stat-ic">📋</span>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-num" id="sirenes_ativas">0</div>
+      <div class="stat-label">Unidades Monitoradas</div>
+      <span class="stat-ic">🏢</span>
+    </div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- Alertas recentes -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">⚡ Alertas Recentes</span>
+        <a href="/alertas" class="btn btn-ghost btn-sm">Ver todos</a>
+      </div>
+      <div class="card-body">
+        {% if alertas_recentes %}
+        <table class="tabela">
+          <thead><tr>
+            <th>#ID</th><th>Horário</th><th>Unidade</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody>
+          {% for a in alertas_recentes %}
+          <tr>
+            <td><code style="color:var(--red)">{{ a.id }}</code></td>
+            <td style="font-family:monospace;font-size:11px">{{ a.ts_br }}</td>
+            <td>{{ a.unidade }}</td>
+            <td><span class="badge {{ a.status }}">{{ a.status }}</span></td>
+            <td>
+              {% if a.status == 'ativo' %}
+              <button class="btn btn-ghost btn-sm" onclick="fecharAlerta('{{ a.id }}', this)">Fechar</button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty"><div class="empty-ic">🛡️</div><div class="empty-txt">Nenhum alerta registrado</div></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Unidades -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🏢 Unidades</span>
+        <a href="/unidades" class="btn btn-ghost btn-sm">Gerenciar</a>
+      </div>
+      <div class="card-body">
+        <table class="tabela">
+          <thead><tr><th>Unidade</th><th>Tipo</th><th>Sirene</th></tr></thead>
+          <tbody>
+          {% for u in units %}
+          <tr>
+            <td>{{ u.nome }}</td>
+            <td><span class="tipo-{{ u.tipo }}">{{ u.tipo }}</span></td>
+            <td>
+              {% if u.sirene_ativa %}
+              <span class="sirene-ativa-label">🔴 ATIVA</span>
+              {% else %}
+              <span style="color:var(--text3);font-size:12px">Desligada</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Logs recentes -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-header">
+      <span class="card-title">📜 Atividade Recente</span>
+      {% if perfil == 'master' %}
+      <a href="/logs" class="btn btn-ghost btn-sm">Ver todos</a>
+      {% endif %}
+    </div>
+    <div class="card-body" style="padding:8px 20px">
+      {% for log in logs_recentes %}
+      <div class="log-item">
+        <span class="log-ts">{{ log.ts_br }}</span>
+        <span class="log-acao">{{ log.acao }}</span>
+        <span class="log-det">{{ log.detalhe }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Atualiza o banner com o número de alertas
+const origPoll = pollStatus;
+async function pollStatus() {
+  await origPoll?.();
+  const ativos = parseInt(document.getElementById('alertas_ativos')?.textContent || '0');
+  const banner = document.getElementById('banner-alerta');
+  if (banner) banner.style.display = ativos > 0 ? 'flex' : 'none';
+  const nav = document.getElementById('nav-alertas');
+  if (nav) { nav.textContent = ativos; nav.style.display = ativos > 0 ? 'inline-block' : 'none'; }
+}
+</script>
+{% endblock %}
