@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block titulo %}Modo Demo — ALERTA SILENCIOSO 360{% endblock %}
+{% block page_titulo %}🎭 Modo Demonstração{% endblock %}
+{% block content %}
+<div class="page">
+
+  <div class="grid-2">
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">🎭 Gerador de Dados Fake</span></div>
+      <div class="card-body" style="padding:24px">
+        <p style="font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.6">
+          Gere alertas e ocorrências simuladas para demonstrar o sistema para prospects sem usar dados reais.
+          Os dados gerados ficam marcados como <strong style="color:var(--amber)">DEMO</strong> e podem ser removidos a qualquer momento.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Quantidade de registros</label>
+          <input class="form-input" type="range" id="qtd-range" min="3" max="20" value="8"
+            oninput="document.getElementById('qtd-val').textContent=this.value" style="padding:6px 0">
+          <div style="text-align:center;font-size:24px;font-weight:700;color:var(--blue);font-family:monospace;margin-top:4px">
+            <span id="qtd-val">8</span> registros
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+          <button class="btn btn-red" onclick="gerar()" id="btn-gerar" style="justify-content:center;padding:13px;font-size:14px">
+            🚀 Gerar dados de demonstração
+          </button>
+          <button class="btn btn-ghost" onclick="limpar()" style="justify-content:center">
+            🗑️ Remover todos os dados demo
+          </button>
+        </div>
+
+        <div id="resultado" style="margin-top:16px;display:none;background:var(--green-bg);border:1px solid var(--green);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--green)"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">💡 Como usar na apresentação</span></div>
+      <div class="card-body" style="padding:20px">
+        {% for n, titulo, desc in [
+          ('1','Gere os dados','Clique em "Gerar" antes de mostrar o sistema para o prospect. Escolha 8 a 15 registros.'),
+          ('2','Abra o dashboard','Mostre o dashboard com os alertas ativos piscando e os cards de métricas preenchidos.'),
+          ('3','Demonstre o SOS','Vá para a tela SOS e acione o botão vermelho ao vivo. O prospect vê o alerta aparecer em tempo real.'),
+          ('4','Mostre o PDF','Abra a tela de alertas, clique em uma ocorrência e mostre o relatório PDF sendo gerado.'),
+          ('5','Limpe depois','Após a apresentação, clique em "Remover dados demo" para deixar o sistema limpo.'),
+        ] %}
+        <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--red2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px">{{ n }}</div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px">{{ titulo }}</div>
+            <div style="font-size:12px;color:var(--text3);line-height:1.5">{{ desc }}</div>
+          </div>
+        </div>
+        {% endfor %}
+
+        <div style="background:var(--amber-bg);border:1px solid #78350F;border-radius:8px;padding:10px 12px;font-size:12px;color:var(--amber);margin-top:8px">
+          ⚡ Dica: abra o dashboard em uma aba e o SOS em outra. Quando acionar o SOS, o dashboard atualiza automaticamente em 5 segundos.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Script de apresentação -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-header"><span class="card-title">📝 Script de Apresentação (20 minutos)</span></div>
+    <div class="card-body" style="padding:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        {% for min, acao, desc in [
+          ('0–2 min','Problema real','Mostre a notícia da UPA Ceilândia. "Câmera gravou. Ninguém reagiu. Conhece alguma situação assim?"'),
+          ('2–5 min','Dashboard','Abra o sistema. "Aqui a central de monitoramento em tempo real. Veja os alertas ativos."'),
+          ('5–10 min','Botão SOS','Acione ao vivo. "Pressei o botão. Em 5 segundos o WhatsApp chega para o segurança."'),
+          ('10–14 min','PDF jurídico','Baixe um PDF. "Esse laudo está pronto para o COREN, CFM ou delegacia. Automático."'),
+          ('14–18 min','Preço e planos','Abra /planos. "R$ 997/mês. Piloto grátis de 14 dias. Quando podemos começar?"'),
+          ('18–20 min','Fechamento','"Vou mandar a proposta hoje. Prefere PIX ou boleto?"'),
+        ] %}
+        <div style="background:var(--bg3);border-radius:8px;padding:12px">
+          <div style="font-size:10px;color:var(--red);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">{{ min }}</div>
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">{{ acao }}</div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.4">{{ desc }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function gerar() {
+  const btn = document.getElementById('btn-gerar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span> Gerando...';
+  const qtd = document.getElementById('qtd-range').value;
+  const data = await api('/api/demo/gerar','POST',{qtd: parseInt(qtd)});
+  if (data.ok) {
+    const res = document.getElementById('resultado');
+    res.style.display = 'block';
+    res.textContent = `✅ ${data.alertas} alertas e ${data.incidentes} ocorrências gerados! Abra o dashboard para ver.`;
+    toast('Dados de demonstração gerados!','success',4000);
+  }
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Gerar dados de demonstração';
+}
+async function limpar() {
+  if (!confirm('Remover todos os dados de demonstração?')) return;
+  const data = await api('/api/demo/limpar','POST');
+  if (data.ok) { toast('Dados demo removidos.','success',3000); document.getElementById('resultado').style.display='none'; }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block titulo %}Unidades — ALERTA SILENCIOSO 360{% endblock %}
+{% block page_titulo %}🏢 Gerenciar Unidades{% endblock %}
+{% block content %}
+<div class="page">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+    <button class="btn btn-red" onclick="abrirModal('modal-unit')">+ Nova Unidade</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Unidades cadastradas</span></div>
+    <div class="card-body">
+      <table class="tabela">
+        <thead><tr><th>#ID</th><th>Nome</th><th>Tipo</th><th>Endereço</th><th>Status</th><th>Sirene</th></tr></thead>
+        <tbody>
+        {% for u in units %}
+        <tr>
+          <td><code style="color:var(--text3);font-size:11px">{{ u.id }}</code></td>
+          <td style="font-weight:500;color:var(--text)">{{ u.nome }}</td>
+          <td><span class="tipo-{{ u.tipo }}">{{ u.tipo }}</span></td>
+          <td style="font-size:12px;color:var(--text3)">{{ u.endereco }}</td>
+          <td><span class="badge {% if u.ativa %}fechado{% else %}aberto{% endif %}">{% if u.ativa %}ativa{% else %}inativa{% endif %}</span></td>
+          <td>{% if u.sirene_ativa %}<span class="sirene-ativa-label">🔴 ATIVA</span>{% else %}<span style="color:var(--text3);font-size:12px">Desligada</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-unit">
+  <div class="modal">
+    <div class="modal-titulo">🏢 Nova Unidade</div>
+    <button class="modal-close" onclick="fecharModal('modal-unit')">✕</button>
+    <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="unit-nome" placeholder="Ex: Escola Municipal Centro"></div>
+    <div class="form-group"><label class="form-label">Tipo</label>
+      <select class="form-select" id="unit-tipo">
+        <option value="escola">🏫 Escola</option>
+        <option value="condominio">🏘️ Condomínio</option>
+        <option value="empresa">🏢 Empresa</option>
+        <option value="portaria">🚪 Portaria</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="unit-end" placeholder="Endereço completo"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-unit')">Cancelar</button>
+      <button class="btn btn-red" onclick="salvarUnit()">Salvar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function salvarUnit() {
+  const data = await api('/api/unidades','POST',{
+    nome: document.getElementById('unit-nome').value,
+    tipo: document.getElementById('unit-tipo').value,
+    endereco: document.getElementById('unit-end').value,
+  });
+  if (data.ok) { toast('Unidade criada!','success',2000); setTimeout(()=>location.reload(),600); }
+}
+</script>
+{% endblock %}
