@@ -1125,3 +1125,11 @@ def resetar_senha():
     log_acao(session["user_id"], "SENHA_RESETADA", f"UserID:{user_id}")
     return jsonify({"ok":True})
 
+
+@app.route("/static/sw.js")
+def service_worker():
+    from flask import send_from_directory
+    response = send_from_directory("static", "sw.js")
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+    return response

@@ -178,3 +178,11 @@ async function toggleSirene(unitId, btn) {
     else { desligarSirene(); toast('Sirene desligada.', 'success', 2000); }
   }
 }
+
+// ── Service Worker (PWA offline) ───────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/sw.js')
+      .catch(() => {});
+  });
+}

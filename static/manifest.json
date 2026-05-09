@@ -1,0 +1,41 @@
+{
+  "name": "ALERTA SILENCIOSO 360",
+  "short_name": "Alerta 360",
+  "description": "Sistema de alerta silencioso para segurança",
+  "start_url": "/sos",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070B14",
+  "theme_color": "#070B14",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Acionar SOS",
+      "short_name": "SOS",
+      "description": "Acionar alerta de emergência",
+      "url": "/sos",
+      "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/dashboard",
+      "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
+    }
+  ],
+  "categories": ["security", "utilities"],
+  "lang": "pt-BR"
+}
