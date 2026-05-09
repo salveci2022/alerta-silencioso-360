@@ -3,53 +3,109 @@
 {% block page_titulo %}⚡ Central de Alertas{% endblock %}
 {% block content %}
 <div class="page">
+
+  <!-- Botões de controle global -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+    <button class="btn btn-ghost btn-sm" onclick="filtrar('todos')" id="f-todos" style="border-color:var(--blue);color:var(--blue)">Todos</button>
+    <button class="btn btn-ghost btn-sm" onclick="filtrar('ativo')" id="f-ativo">🔴 Ativos</button>
+    <button class="btn btn-ghost btn-sm" onclick="filtrar('fechado')" id="f-fechado">✅ Fechados</button>
+    <div style="flex:1"></div>
+    <button class="btn btn-sm" style="background:#1d4ed8;color:#fff" onclick="gerarRelatorioGeral()">📄 Relatório PDF Geral</button>
+    <button class="btn btn-sm" style="background:#d97706;color:#fff" onclick="confirmar('parar-tudo','Parar tudo: fechar todos alertas ativos e desligar todas as sirenes?')">⛔ Parar Tudo</button>
+    {% if perfil == 'master' %}
+    <button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="confirmar('limpar-alertas','Limpar TODOS os alertas? Esta ação não pode ser desfeita.')">🗑️ Limpar Alertas</button>
+    <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="confirmar('reiniciar','REINICIAR o sistema? Apaga todos os alertas, ocorrências e logs.')">♻️ Reiniciar Sistema</button>
+    {% endif %}
+  </div>
+
   <div class="card">
     <div class="card-header">
       <span class="card-title">Todos os alertas</span>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost btn-sm" onclick="filtrar('todos')">Todos</button>
-        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red-brd)" onclick="filtrar('ativo')">Ativos</button>
-        <button class="btn btn-ghost btn-sm" onclick="filtrar('fechado')">Fechados</button>
-      </div>
+      <span style="font-size:12px;color:var(--text3)" id="contador">{{ alerts|length }} registros</span>
     </div>
     <div class="card-body">
       {% if alerts %}
+      <div style="overflow-x:auto">
       <table class="tabela" id="tabela-alertas">
         <thead><tr>
           <th>#ID</th><th>Data/Hora</th><th>Operador</th>
-          <th>Unidade</th><th>Tipo</th><th>Status</th><th>Ações</th>
+          <th>Unidade</th><th>Tipo</th><th>Descrição</th><th>Status</th><th>Ações</th>
         </tr></thead>
         <tbody>
         {% for a in alerts %}
         <tr data-status="{{ a.status }}">
           <td><code style="color:var(--red)">{{ a.id }}</code></td>
           <td style="font-family:monospace;font-size:11px;white-space:nowrap">{{ a.ts_br }}</td>
-          <td>{{ a.usuario }}</td>
-          <td>{{ a.unidade }}</td>
-          <td><span style="font-size:12px">{{ a.tipo }}</span></td>
+          <td style="font-size:12px">{{ a.usuario }}</td>
+          <td style="font-size:12px">{{ a.unidade }}</td>
+          <td>
+            <span style="font-size:11px;padding:2px 8px;border-radius:4px;
+              background:{% if a.tipo=='SOS' %}var(--red-bg){% elif a.tipo=='Incêndio' %}#431407{% else %}var(--bg3){% endif %};
+              color:{% if a.tipo=='SOS' %}var(--red){% elif a.tipo=='Incêndio' %}#F97316{% else %}var(--text3){% endif %}">
+              {{ a.tipo }}
+            </span>
+          </td>
+          <td style="font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+              title="{{ a.descricao }}">{{ a.descricao or '—' }}</td>
           <td><span class="badge {{ a.status }}">{{ a.status }}</span></td>
-          <td style="white-space:nowrap">
+          <td style="white-space:nowrap;display:flex;gap:6px;align-items:center">
             {% if a.status == 'ativo' %}
             <button class="btn btn-ghost btn-sm" onclick="fecharAlerta('{{ a.id }}', this)">✓ Fechar</button>
             {% endif %}
+            <a class="btn btn-sm" style="background:var(--blue-bg);color:var(--blue);border:1px solid #1e3a5f;text-decoration:none"
+               href="/relatorio/alerta/{{ a.id }}" target="_blank">📄 PDF</a>
           </td>
         </tr>
         {% endfor %}
         </tbody>
       </table>
+      </div>
       {% else %}
       <div class="empty"><div class="empty-ic">🛡️</div><div class="empty-txt">Nenhum alerta registrado</div></div>
       {% endif %}
     </div>
   </div>
+
+  <!-- Caixa de resultado das ações -->
+  <div id="acao-result" style="display:none;margin-top:16px;border-radius:10px;padding:14px 16px"></div>
+
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
 function filtrar(status) {
+  let vis = 0;
   document.querySelectorAll('#tabela-alertas tbody tr').forEach(tr => {
-    tr.style.display = (status==='todos' || tr.dataset.status===status) ? '' : 'none';
+    const mostrar = status==='todos' || tr.dataset.status===status;
+    tr.style.display = mostrar ? '' : 'none';
+    if (mostrar) vis++;
   });
+  document.getElementById('contador').textContent = vis + ' registros';
+  ['todos','ativo','fechado'].forEach(f => {
+    const btn = document.getElementById('f-'+f);
+    if (btn) btn.style.borderColor = f===status ? 'var(--blue)' : 'var(--border2)';
+  });
+}
+
+async function confirmar(acao, msg) {
+  if (!confirm(msg)) return;
+  let url = '';
+  if (acao === 'parar-tudo')     url = '/api/sistema/parar-tudo';
+  if (acao === 'limpar-alertas') url = '/api/sistema/limpar-alertas';
+  if (acao === 'reiniciar')      url = '/api/sistema/reiniciar';
+  const data = await api(url, 'POST');
+  const box  = document.getElementById('acao-result');
+  box.style.display   = 'block';
+  box.style.background = data.ok ? 'var(--green-bg)' : 'var(--red-bg)';
+  box.style.border     = data.ok ? '1px solid var(--green)' : '1px solid var(--red)';
+  box.style.color      = data.ok ? 'var(--green)' : 'var(--red)';
+  box.textContent      = data.msg || (data.ok ? 'Executado com sucesso.' : 'Erro: ' + data.erro);
+  if (data.ok) setTimeout(() => location.reload(), 2000);
+}
+
+function gerarRelatorioGeral() {
+  window.open('/relatorio/geral', '_blank');
 }
 </script>
 {% endblock %}

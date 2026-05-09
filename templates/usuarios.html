@@ -3,46 +3,122 @@
 {% block page_titulo %}👤 Gerenciar Usuários{% endblock %}
 {% block content %}
 <div class="page">
-  <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div style="font-size:13px;color:var(--text3)">{{ users|length }} usuário(s) cadastrado(s)</div>
     <button class="btn btn-red" onclick="abrirModal('modal-user')">+ Novo Usuário</button>
   </div>
+
+  <!-- Card: como usuários acessam -->
+  <div class="card" style="margin-bottom:16px;border-color:var(--blue)">
+    <div class="card-header" style="background:var(--blue-bg)">
+      <span class="card-title" style="color:var(--blue)">ℹ️ Como os usuários acessam o sistema</span>
+    </div>
+    <div class="card-body" style="padding:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">🌐 URL de acesso</div>
+          <div style="font-family:monospace;font-size:12px;color:var(--blue);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;word-break:break-all">
+            {{ request.host_url }}login
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">Compartilhe este link com sua equipe</div>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">📱 Instalar no celular (PWA)</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.6">
+            <strong style="color:var(--text)">Android:</strong> Abra no Chrome → menu ⋮ → Adicionar à tela inicial<br>
+            <strong style="color:var(--text)">iPhone:</strong> Abra no Safari → compartilhar ⬆ → Adicionar à Tela de Início
+          </div>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">👥 Perfis de acesso</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:12px"><span style="color:var(--red);font-weight:600">Master</span> — acesso total ao sistema</div>
+            <div style="font-size:12px"><span style="color:var(--blue);font-weight:600">Operador</span> — dashboard, SOS, alertas, ocorrências</div>
+            <div style="font-size:12px"><span style="color:var(--text3);font-weight:600">Usuário</span> — somente botão SOS</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela de usuários -->
   <div class="card">
+    <div class="card-header"><span class="card-title">Usuários cadastrados</span></div>
     <div class="card-body">
       <table class="tabela">
-        <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th></tr></thead>
+        <thead><tr>
+          <th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Ações</th>
+        </tr></thead>
         <tbody>
         {% for u in users %}
         <tr>
           <td style="font-weight:500;color:var(--text)">{{ u.nome }}</td>
-          <td style="font-family:monospace;font-size:12px">{{ u.email }}</td>
+          <td style="font-family:monospace;font-size:12px;color:var(--text2)">{{ u.email }}</td>
           <td>
-            <span style="font-size:11px;padding:2px 8px;border-radius:4px;
+            <span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;
               background:{% if u.perfil=='master' %}var(--red-bg){% elif u.perfil=='operador' %}var(--blue-bg){% else %}var(--bg3){% endif %};
-              color:{% if u.perfil=='master' %}var(--red){% elif u.perfil=='operador' %}var(--blue){% else %}var(--text3){% endif %}">
+              color:{% if u.perfil=='master' %}var(--red){% elif u.perfil=='operador' %}var(--blue){% else %}var(--text3){% endif %};
+              border:1px solid {% if u.perfil=='master' %}var(--red-brd){% elif u.perfil=='operador' %}#1e3a5f{% else %}var(--border){% endif %}">
               {{ u.perfil }}
             </span>
           </td>
-          <td><span class="badge {% if u.ativo %}fechado{% else %}aberto{% endif %}">{% if u.ativo %}ativo{% else %}inativo{% endif %}</span></td>
+          <td>
+            <span class="badge {% if u.ativo %}fechado{% else %}ativo{% endif %}">
+              {% if u.ativo %}ativo{% else %}inativo{% endif %}
+            </span>
+          </td>
+          <td style="white-space:nowrap;display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm"
+              onclick="abrirReset('{{ u.id }}','{{ u.nome }}')">
+              🔑 Reset senha
+            </button>
+            <button class="btn btn-ghost btn-sm"
+              style="color:var(--blue)"
+              onclick="copiarAcesso('{{ u.email }}')">
+              📋 Copiar acesso
+            </button>
+          </td>
         </tr>
         {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+
 </div>
+
+<!-- Modal novo usuário -->
 <div class="modal-overlay" id="modal-user">
   <div class="modal">
     <div class="modal-titulo">👤 Novo Usuário</div>
     <button class="modal-close" onclick="fecharModal('modal-user')">✕</button>
-    <div class="form-group"><label class="form-label">Nome completo</label><input class="form-input" id="u-nome"></div>
-    <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" id="u-email" type="email"></div>
-    <div class="form-group"><label class="form-label">Senha inicial</label><input class="form-input" id="u-senha" type="password" placeholder="Mínimo 6 caracteres"></div>
-    <div class="form-group"><label class="form-label">Perfil</label>
+    <div class="form-group">
+      <label class="form-label">Nome completo</label>
+      <input class="form-input" id="u-nome" placeholder="Ex: João da Silva">
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail (será o login)</label>
+      <input class="form-input" id="u-email" type="email" placeholder="joao@empresa.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha inicial</label>
+      <input class="form-input" id="u-senha" type="password" placeholder="Mínimo 6 caracteres">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Perfil de acesso</label>
       <select class="form-select" id="u-perfil">
-        <option value="operador">Operador</option>
-        <option value="usuario">Usuário (escola/empresa)</option>
-        <option value="master">Master Admin</option>
+        <option value="usuario">Usuário — somente botão SOS</option>
+        <option value="operador">Operador — dashboard + alertas + ocorrências</option>
+        <option value="master">Master Admin — acesso total</option>
       </select>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;font-size:12px;color:var(--text3);margin-bottom:4px">
+      💡 Após criar, o usuário acessa em: <strong style="color:var(--blue)">{{ request.host_url }}login</strong>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharModal('modal-user')">Cancelar</button>
@@ -50,18 +126,63 @@
     </div>
   </div>
 </div>
+
+<!-- Modal reset senha -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal">
+    <div class="modal-titulo">🔑 Resetar Senha</div>
+    <button class="modal-close" onclick="fecharModal('modal-reset')">✕</button>
+    <p id="reset-nome" style="font-size:13px;color:var(--text3);margin-bottom:16px"></p>
+    <input type="hidden" id="reset-uid">
+    <div class="form-group">
+      <label class="form-label">Nova senha</label>
+      <input class="form-input" id="reset-senha" type="password" placeholder="Digite a nova senha">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-reset')">Cancelar</button>
+      <button class="btn btn-red" onclick="resetarSenha()">Confirmar reset</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
+
 {% block scripts %}
 <script>
 async function salvarUser() {
-  const data = await api('/api/usuarios','POST',{
-    nome: document.getElementById('u-nome').value,
-    email: document.getElementById('u-email').value,
-    senha: document.getElementById('u-senha').value,
-    perfil: document.getElementById('u-perfil').value,
+  const email = document.getElementById('u-email').value;
+  const nome  = document.getElementById('u-nome').value;
+  const perfil= document.getElementById('u-perfil').value;
+  const senha = document.getElementById('u-senha').value;
+  if (!email || !nome || !senha) { toast('Preencha todos os campos.'); return; }
+  const data = await api('/api/usuarios','POST',{nome,email,senha,perfil});
+  if (data.ok) {
+    toast(`Usuário ${nome} criado! Login: ${email}`, 'success', 5000);
+    setTimeout(()=>location.reload(), 1200);
+  } else toast('Erro: '+(data.erro||'desconhecido'));
+}
+
+function abrirReset(uid, nome) {
+  document.getElementById('reset-uid').value = uid;
+  document.getElementById('reset-nome').textContent = `Usuário: ${nome}`;
+  document.getElementById('reset-senha').value = '';
+  abrirModal('modal-reset');
+}
+
+async function resetarSenha() {
+  const uid   = document.getElementById('reset-uid').value;
+  const senha = document.getElementById('reset-senha').value;
+  if (!senha || senha.length < 6) { toast('Senha deve ter no mínimo 6 caracteres.'); return; }
+  const data = await api('/api/sistema/resetar-senha','POST',{user_id:uid, nova_senha:senha});
+  if (data.ok) { toast('Senha alterada com sucesso!','success',3000); fecharModal('modal-reset'); }
+  else toast('Erro ao resetar senha.');
+}
+
+function copiarAcesso(email) {
+  const url = window.location.origin + '/login';
+  const texto = `Acesso ALERTA SILENCIOSO 360\nURL: ${url}\nE-mail: ${email}\nSenha: (conforme cadastro)`;
+  navigator.clipboard.writeText(texto).then(() => {
+    toast('Dados de acesso copiados!', 'success', 3000);
   });
-  if (data.ok) { toast('Usuário criado!','success',2000); setTimeout(()=>location.reload(),600); }
-  else toast('Erro: '+(data.erro||'desconhecido'));
 }
 </script>
 {% endblock %}
